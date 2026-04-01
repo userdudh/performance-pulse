@@ -26,7 +26,6 @@ export interface FuncionarioMetrics {
   pct_meta: number;
   eficiencia_tempo: number;
   saldo_horas: number;
-  score: number;
   dias_trabalhados: number;
   dias_falta_justificada: number;
   dias_falta_injustificada: number;
@@ -40,7 +39,6 @@ export interface SetorMetrics {
   producao_total: number;
   media_pct_meta: number;
   media_eficiencia: number;
-  media_score: number;
   total_funcionarios: number;
   taxa_absenteismo_media: number;
 }
@@ -92,8 +90,6 @@ export function calcFuncionarioMetrics(registros: RegistroDiario[]): Funcionario
     const pct_meta = meta_mensal > 0 ? (producao_total / meta_mensal) * 100 : 0;
     const eficiencia_tempo = carga_horaria_mensal > 0 ? (horas_trabalhadas / carga_horaria_mensal) * 100 : 0;
     const saldo_horas = horas_trabalhadas - carga_horaria_mensal;
-    const score = pct_meta * 0.7 + eficiencia_tempo * 0.3;
-
     let status: "verde" | "amarelo" | "vermelho" = "verde";
     if (pct_meta < 70) status = "vermelho";
     else if (pct_meta < 90) status = "amarelo";
@@ -109,7 +105,6 @@ export function calcFuncionarioMetrics(registros: RegistroDiario[]): Funcionario
       pct_meta,
       eficiencia_tempo,
       saldo_horas,
-      score,
       dias_trabalhados: total_dias,
       dias_falta_justificada,
       dias_falta_injustificada,
@@ -132,7 +127,6 @@ export function calcSetorMetrics(funcMetrics: FuncionarioMetrics[]): SetorMetric
     producao_total: funcs.reduce((a, f) => a + f.producao_total, 0),
     media_pct_meta: funcs.reduce((a, f) => a + f.pct_meta, 0) / funcs.length,
     media_eficiencia: funcs.reduce((a, f) => a + f.eficiencia_tempo, 0) / funcs.length,
-    media_score: funcs.reduce((a, f) => a + f.score, 0) / funcs.length,
     total_funcionarios: funcs.length,
     taxa_absenteismo_media: funcs.reduce((a, f) => a + f.taxa_absenteismo, 0) / funcs.length,
   }));
@@ -267,21 +261,21 @@ export function generateInsights(funcMetrics: FuncionarioMetrics[], setorMetrics
     });
   }
 
-  const setoresBaixos = setorMetrics.filter((s) => s.media_score < 60);
+  const setoresBaixos = setorMetrics.filter((s) => s.media_pct_meta < 60);
   if (setoresBaixos.length > 0) {
     insights.push({
       tipo: "warning",
       titulo: "📉 Setores com baixa eficiência",
-      descricao: `${setoresBaixos.map((s) => s.setor).join(", ")} apresentam score médio abaixo de 60%.`,
+      descricao: `${setoresBaixos.map((s) => s.setor).join(", ")} apresentam % meta média abaixo de 60%.`,
     });
   }
 
-  const setoresAltos = setorMetrics.filter((s) => s.media_score >= 85);
+  const setoresAltos = setorMetrics.filter((s) => s.media_pct_meta >= 85);
   if (setoresAltos.length > 0) {
     insights.push({
       tipo: "success",
       titulo: "🏆 Setores com alta performance",
-      descricao: `${setoresAltos.map((s) => s.setor).join(", ")} mantêm score médio acima de 85%.`,
+      descricao: `${setoresAltos.map((s) => s.setor).join(", ")} mantêm % meta média acima de 85%.`,
     });
   }
 
