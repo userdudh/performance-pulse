@@ -26,7 +26,6 @@ export interface FuncionarioMetrics {
   pct_meta: number;
   eficiencia_tempo: number;
   saldo_horas: number;
-  score: number;
   dias_trabalhados: number;
   dias_falta_justificada: number;
   dias_falta_injustificada: number;
