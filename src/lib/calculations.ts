@@ -39,7 +39,6 @@ export interface SetorMetrics {
   producao_total: number;
   media_pct_meta: number;
   media_eficiencia: number;
-  media_score: number;
   total_funcionarios: number;
   taxa_absenteismo_media: number;
 }
