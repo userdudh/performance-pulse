@@ -25,8 +25,16 @@ interface ParsedRow {
 }
 
 const EXPECTED_COLUMNS = [
-  "data", "funcionario_id", "nome", "setor", "meta_mensal",
-  "meta_diaria", "producao_dia", "hora_entrada", "hora_saida", "horas_trabalhadas",
+  "data",
+  "funcionario_id",
+  "nome",
+  "setor",
+  "meta_mensal",
+  "meta_diaria",
+  "producao_dia",
+  "hora_entrada",
+  "hora_saida",
+  "horas_trabalhadas",
   "status_presenca",
 ];
 
@@ -38,20 +46,59 @@ export default function ImportarDados() {
   const [imported, setImported] = useState(false);
   const [fileName, setFileName] = useState("");
 
-  const parseDate = (val: string): string => {
+  const parseDate = (val: string | number): string => {
     if (!val) return "";
-    if (/^\d{4}-\d{2}-\d{2}/.test(val)) return val.substring(0, 10);
-    const parts = val.split("/");
-    if (parts.length === 3) {
-      const [d, m, y] = parts;
-      return `${y.padStart(4, "20")}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
-    }
+
+    // 1. Lida com números puros de data do Excel
     const num = Number(val);
     if (!isNaN(num) && num > 30000) {
-      const date = new Date((num - 25569) * 86400 * 1000);
+      const date = new Date(Math.round((num - 25569) * 86400 * 1000));
       return date.toISOString().split("T")[0];
     }
-    return val;
+
+    // 2. Lida com textos (do CSV ou Excel)
+    const strVal = String(val).trim();
+
+    // Se já estiver no formato correto YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(strVal)) return strVal;
+
+    const delimiter = strVal.includes("/") ? "/" : "-";
+    const parts = strVal.split(delimiter);
+
+    if (parts.length === 3) {
+      let d, m, y;
+
+      // Se começar com o Ano (ex: 2025-30-11)
+      if (parts[0].length === 4) {
+        y = parts[0];
+        if (Number(parts[1]) > 12) {
+          // O mês veio no lugar do dia
+          d = parts[1];
+          m = parts[2];
+        } else {
+          m = parts[1];
+          d = parts[2];
+        }
+      }
+      // Se terminar com o Ano (ex: 30-11-2025 ou 11-30-2025)
+      else {
+        y = parts[2];
+        if (Number(parts[1]) > 12) {
+          // O mês está no início (MM-DD-YYYY)
+          m = parts[0];
+          d = parts[1];
+        } else {
+          // Padrão normal (DD-MM-YYYY)
+          d = parts[0];
+          m = parts[1];
+        }
+      }
+
+      y = y.length === 2 ? `20${y}` : y;
+      return `${y.padStart(4, "20")}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+    }
+
+    return strVal; // Retorna como veio se não conseguir identificar
   };
 
   const parseFile = useCallback((file: File) => {
@@ -73,8 +120,8 @@ export default function ImportarDados() {
           return;
         }
 
-        const cols = Object.keys(json[0]).map(c => c.toLowerCase().trim());
-        const missing = EXPECTED_COLUMNS.filter(c => !cols.includes(c));
+        const cols = Object.keys(json[0]).map((c) => c.toLowerCase().trim());
+        const missing = EXPECTED_COLUMNS.filter((c) => !cols.includes(c));
         if (missing.length > 0) {
           setErrors([`Colunas faltando: ${missing.join(", ")}`]);
           return;
@@ -83,7 +130,7 @@ export default function ImportarDados() {
         const errs: string[] = [];
         const rows: ParsedRow[] = json.map((row, i) => {
           const normalize = (key: string) => {
-            const found = Object.keys(row).find(k => k.toLowerCase().trim() === key);
+            const found = Object.keys(row).find((k) => k.toLowerCase().trim() === key);
             return found ? String(row[found] ?? "").trim() : "";
           };
 
@@ -132,7 +179,7 @@ export default function ImportarDados() {
     try {
       const BATCH_SIZE = 200;
       for (let i = 0; i < parsedData.length; i += BATCH_SIZE) {
-        const batch = parsedData.slice(i, i + BATCH_SIZE).map(r => ({
+        const batch = parsedData.slice(i, i + BATCH_SIZE).map((r) => ({
           ...r,
           user_id: user.id,
         }));
@@ -172,7 +219,7 @@ export default function ImportarDados() {
       const file = e.dataTransfer.files[0];
       if (file) parseFile(file);
     },
-    [parseFile]
+    [parseFile],
   );
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -186,11 +233,14 @@ export default function ImportarDados() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="font-display text-2xl font-bold text-foreground">Importar Dados</h1>
-            <p className="text-sm text-muted-foreground">
-              Importe sua planilha com dados diários de produção
-            </p>
+            <p className="text-sm text-muted-foreground">Importe sua planilha com dados diários de produção</p>
           </div>
-          <Button variant="outline" size="sm" onClick={handleClearAll} className="text-destructive border-destructive/30 hover:bg-destructive/10">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleClearAll}
+            className="text-destructive border-destructive/30 hover:bg-destructive/10"
+          >
             <Trash2 className="mr-2 h-4 w-4" /> Limpar Dados
           </Button>
         </div>
@@ -198,7 +248,7 @@ export default function ImportarDados() {
         <Card className="glass border-border/40">
           <CardContent className="p-6">
             <div
-              onDragOver={e => e.preventDefault()}
+              onDragOver={(e) => e.preventDefault()}
               onDrop={handleDrop}
               className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border/40 bg-muted/10 p-16 text-center transition-all duration-300 hover:border-primary/40 hover:bg-primary/5 cursor-pointer group"
             >
@@ -210,7 +260,9 @@ export default function ImportarDados() {
               <label>
                 <input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileInput} className="hidden" />
                 <Button variant="outline" asChild className="mt-4 border-border/50">
-                  <span className="cursor-pointer"><FileSpreadsheet className="mr-2 h-4 w-4" /> Selecionar Arquivo</span>
+                  <span className="cursor-pointer">
+                    <FileSpreadsheet className="mr-2 h-4 w-4" /> Selecionar Arquivo
+                  </span>
                 </Button>
               </label>
             </div>
@@ -224,14 +276,19 @@ export default function ImportarDados() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
-              {EXPECTED_COLUMNS.map(col => (
-                <Badge key={col} variant="secondary" className={`bg-primary/10 text-primary border border-primary/20 ${col === 'status_presenca' ? 'ring-2 ring-warning/50' : ''}`}>
-                  {col} {col === 'status_presenca' && '⭐'}
+              {EXPECTED_COLUMNS.map((col) => (
+                <Badge
+                  key={col}
+                  variant="secondary"
+                  className={`bg-primary/10 text-primary border border-primary/20 ${col === "status_presenca" ? "ring-2 ring-warning/50" : ""}`}
+                >
+                  {col} {col === "status_presenca" && "⭐"}
                 </Badge>
               ))}
             </div>
             <p className="mt-3 text-xs text-muted-foreground">
-              ⭐ <strong>status_presenca</strong>: Valores aceitos: "Presente", "Falta Justificada", "Falta Injustificada", "Atraso"
+              ⭐ <strong>status_presenca</strong>: Valores aceitos: "Presente", "Falta Justificada", "Falta
+              Injustificada", "Atraso"
             </p>
           </CardContent>
         </Card>
@@ -243,7 +300,9 @@ export default function ImportarDados() {
                 <AlertTriangle className="mt-0.5 h-5 w-5 text-destructive" />
                 <div className="space-y-1">
                   {errors.map((err, i) => (
-                    <p key={i} className="text-sm text-destructive">{err}</p>
+                    <p key={i} className="text-sm text-destructive">
+                      {err}
+                    </p>
                   ))}
                 </div>
               </div>
@@ -259,7 +318,11 @@ export default function ImportarDados() {
                   <CardTitle className="font-display text-base">Pré-visualização: {fileName}</CardTitle>
                   <CardDescription>{parsedData.length} registros prontos para importar</CardDescription>
                 </div>
-                <Button onClick={handleImport} disabled={importing || imported} className="gradient-bg text-primary-foreground">
+                <Button
+                  onClick={handleImport}
+                  disabled={importing || imported}
+                  className="gradient-bg text-primary-foreground"
+                >
                   {imported ? "✓ Importado" : importing ? "Importando..." : "Importar Dados"}
                 </Button>
               </div>
@@ -286,12 +349,18 @@ export default function ImportarDados() {
                         <TableCell className="text-sm">{r.producao_dia}</TableCell>
                         <TableCell className="text-sm">{r.horas_trabalhadas}h</TableCell>
                         <TableCell>
-                          <Badge variant="secondary" className={
-                            r.status_presenca.includes('Injustificada') ? 'bg-destructive/20 text-destructive' :
-                            r.status_presenca.includes('Justificada') ? 'bg-warning/20 text-warning' :
-                            r.status_presenca === 'Atraso' ? 'bg-warning/20 text-warning' :
-                            'bg-success/20 text-success'
-                          }>
+                          <Badge
+                            variant="secondary"
+                            className={
+                              r.status_presenca.includes("Injustificada")
+                                ? "bg-destructive/20 text-destructive"
+                                : r.status_presenca.includes("Justificada")
+                                  ? "bg-warning/20 text-warning"
+                                  : r.status_presenca === "Atraso"
+                                    ? "bg-warning/20 text-warning"
+                                    : "bg-success/20 text-success"
+                            }
+                          >
                             {r.status_presenca}
                           </Badge>
                         </TableCell>
@@ -300,7 +369,9 @@ export default function ImportarDados() {
                   </TableBody>
                 </Table>
                 {parsedData.length > 20 && (
-                  <p className="mt-2 text-center text-xs text-muted-foreground">...e mais {parsedData.length - 20} registros</p>
+                  <p className="mt-2 text-center text-xs text-muted-foreground">
+                    ...e mais {parsedData.length - 20} registros
+                  </p>
                 )}
               </div>
             </CardContent>
