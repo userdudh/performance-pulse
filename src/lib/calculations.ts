@@ -127,7 +127,6 @@ export function calcSetorMetrics(funcMetrics: FuncionarioMetrics[]): SetorMetric
     producao_total: funcs.reduce((a, f) => a + f.producao_total, 0),
     media_pct_meta: funcs.reduce((a, f) => a + f.pct_meta, 0) / funcs.length,
     media_eficiencia: funcs.reduce((a, f) => a + f.eficiencia_tempo, 0) / funcs.length,
-    media_score: funcs.reduce((a, f) => a + f.score, 0) / funcs.length,
     total_funcionarios: funcs.length,
     taxa_absenteismo_media: funcs.reduce((a, f) => a + f.taxa_absenteismo, 0) / funcs.length,
   }));
