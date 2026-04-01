@@ -49,17 +49,14 @@ export default function ImportarDados() {
   const parseDate = (val: string | number): string => {
     if (!val) return "";
 
-    // 1. Lida com números puros de data do Excel
     const num = Number(val);
     if (!isNaN(num) && num > 30000) {
       const date = new Date(Math.round((num - 25569) * 86400 * 1000));
       return date.toISOString().split("T")[0];
     }
 
-    // 2. Lida com textos (do CSV ou Excel)
     const strVal = String(val).trim();
 
-    // Se já estiver no formato correto YYYY-MM-DD
     if (/^\d{4}-\d{2}-\d{2}$/.test(strVal)) return strVal;
 
     const delimiter = strVal.includes("/") ? "/" : "-";
@@ -68,27 +65,21 @@ export default function ImportarDados() {
     if (parts.length === 3) {
       let d, m, y;
 
-      // Se começar com o Ano (ex: 2025-30-11)
       if (parts[0].length === 4) {
         y = parts[0];
         if (Number(parts[1]) > 12) {
-          // O mês veio no lugar do dia
           d = parts[1];
           m = parts[2];
         } else {
           m = parts[1];
           d = parts[2];
         }
-      }
-      // Se terminar com o Ano (ex: 30-11-2025 ou 11-30-2025)
-      else {
+      } else {
         y = parts[2];
         if (Number(parts[1]) > 12) {
-          // O mês está no início (MM-DD-YYYY)
           m = parts[0];
           d = parts[1];
         } else {
-          // Padrão normal (DD-MM-YYYY)
           d = parts[0];
           m = parts[1];
         }
@@ -98,7 +89,7 @@ export default function ImportarDados() {
       return `${y.padStart(4, "20")}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
     }
 
-    return strVal; // Retorna como veio se não conseguir identificar
+    return strVal;
   };
 
   const parseFile = useCallback((file: File) => {

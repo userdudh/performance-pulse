@@ -61,8 +61,6 @@ export interface Insight {
   descricao: string;
 }
 
-const CARGA_HORARIA_MENSAL = 220;
-
 export function calcFuncionarioMetrics(registros: RegistroDiario[]): FuncionarioMetrics[] {
   const grouped = new Map<string, RegistroDiario[]>();
   registros.forEach((r) => {
@@ -74,8 +72,7 @@ export function calcFuncionarioMetrics(registros: RegistroDiario[]): Funcionario
   return Array.from(grouped.entries()).map(([funcionario_id, regs]) => {
     const nome = regs[0].nome;
     const setor = regs[0].setor;
-
-    const meta_mensal = regs.reduce((a, r) => a + (Number(r.meta_diaria) || 0), 0);
+    const meta_mensal = Math.max(...regs.map((r) => Number(r.meta_mensal) || 0));
     const producao_total = regs.reduce((a, r) => a + (Number(r.producao_dia) || 0), 0);
     const horas_trabalhadas = regs.reduce((a, r) => a + (Number(r.horas_trabalhadas) || 0), 0);
     const carga_horaria_mensal = regs.length * 8;
@@ -303,7 +300,6 @@ export function generateInsights(funcMetrics: FuncionarioMetrics[], setorMetrics
     });
   }
 
-  // Sugestão de realocação
   const funcionariosComImpacto = funcMetrics.filter((f) => f.status === "vermelho" && f.taxa_absenteismo > 10);
   if (funcionariosComImpacto.length > 0) {
     const porSetor = new Map<string, string[]>();
