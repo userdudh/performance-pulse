@@ -261,21 +261,21 @@ export function generateInsights(funcMetrics: FuncionarioMetrics[], setorMetrics
     });
   }
 
-  const setoresBaixos = setorMetrics.filter((s) => s.media_score < 60);
+  const setoresBaixos = setorMetrics.filter((s) => s.media_pct_meta < 60);
   if (setoresBaixos.length > 0) {
     insights.push({
       tipo: "warning",
       titulo: "📉 Setores com baixa eficiência",
-      descricao: `${setoresBaixos.map((s) => s.setor).join(", ")} apresentam score médio abaixo de 60%.`,
+      descricao: `${setoresBaixos.map((s) => s.setor).join(", ")} apresentam % meta média abaixo de 60%.`,
     });
   }
 
-  const setoresAltos = setorMetrics.filter((s) => s.media_score >= 85);
+  const setoresAltos = setorMetrics.filter((s) => s.media_pct_meta >= 85);
   if (setoresAltos.length > 0) {
     insights.push({
       tipo: "success",
       titulo: "🏆 Setores com alta performance",
-      descricao: `${setoresAltos.map((s) => s.setor).join(", ")} mantêm score médio acima de 85%.`,
+      descricao: `${setoresAltos.map((s) => s.setor).join(", ")} mantêm % meta média acima de 85%.`,
     });
   }
 
