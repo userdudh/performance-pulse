@@ -6,6 +6,61 @@
 
 @layer base {
   :root {
+    --background: 220 20% 97%;
+    --foreground: 230 25% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 230 25% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 230 25% 12%;
+
+    --primary: 250 84% 64%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 90% 56%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 220 14% 92%;
+    --muted-foreground: 220 10% 40%;
+
+    --accent: 250 50% 94%;
+    --accent-foreground: 250 84% 50%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 14% 86%;
+    --input: 220 14% 88%;
+    --ring: 250 84% 64%;
+
+    --radius: 0.75rem;
+
+    --success: 160 72% 42%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --sidebar-background: 220 20% 96%;
+    --sidebar-foreground: 220 10% 35%;
+    --sidebar-primary: 250 84% 64%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 250 40% 94%;
+    --sidebar-accent-foreground: 250 84% 50%;
+    --sidebar-border: 220 14% 88%;
+    --sidebar-ring: 250 84% 64%;
+
+    --neon-purple: 270 100% 70%;
+    --neon-blue: 220 100% 60%;
+    --neon-cyan: 185 100% 40%;
+    --gradient-start: 250 84% 64%;
+    --gradient-end: 220 90% 56%;
+
+    --chart-grid: 220 14% 86%;
+    --chart-text: 220 10% 40%;
+  }
+
+  .dark {
     --background: 230 25% 8%;
     --foreground: 220 20% 95%;
 
@@ -55,6 +110,9 @@
     --neon-cyan: 185 100% 55%;
     --gradient-start: 250 84% 64%;
     --gradient-end: 220 90% 56%;
+
+    --chart-grid: 230 18% 16%;
+    --chart-text: 225 15% 55%;
   }
 }
 

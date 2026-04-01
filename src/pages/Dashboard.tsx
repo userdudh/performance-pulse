@@ -101,7 +101,7 @@ export default function Dashboard() {
   const noData = registros.length === 0;
 
   const kpis = [
-    { title: "Score Médio", value: `${mediaMeta.toFixed(1)}%`, icon: Target, color: mediaMeta >= 90 ? "text-success" : mediaMeta >= 70 ? "text-warning" : "text-destructive", bgColor: mediaMeta >= 90 ? "bg-success/10" : mediaMeta >= 70 ? "bg-warning/10" : "bg-destructive/10" },
+    { title: "% Meta Média", value: `${mediaMeta.toFixed(1)}%`, icon: Target, color: mediaMeta >= 90 ? "text-success" : mediaMeta >= 70 ? "text-warning" : "text-destructive", bgColor: mediaMeta >= 90 ? "bg-success/10" : mediaMeta >= 70 ? "bg-warning/10" : "bg-destructive/10" },
     { title: "Total Produzido", value: Number(totalProduzido.toFixed(3)).toLocaleString("pt-BR"), icon: TrendingUp, color: "text-primary", bgColor: "bg-primary/10" },
     { title: "Horas Trabalhadas", value: `${totalHoras.toFixed(1)}h`, icon: Clock, color: "text-secondary", bgColor: "bg-secondary/10" },
     { title: "Funcionários", value: totalFunc, icon: Users, color: "text-neon-cyan", bgColor: "bg-neon-cyan/10" },
