@@ -90,8 +90,6 @@ export function calcFuncionarioMetrics(registros: RegistroDiario[]): Funcionario
     const pct_meta = meta_mensal > 0 ? (producao_total / meta_mensal) * 100 : 0;
     const eficiencia_tempo = carga_horaria_mensal > 0 ? (horas_trabalhadas / carga_horaria_mensal) * 100 : 0;
     const saldo_horas = horas_trabalhadas - carga_horaria_mensal;
-    const score = pct_meta * 0.7 + eficiencia_tempo * 0.3;
-
     let status: "verde" | "amarelo" | "vermelho" = "verde";
     if (pct_meta < 70) status = "vermelho";
     else if (pct_meta < 90) status = "amarelo";
