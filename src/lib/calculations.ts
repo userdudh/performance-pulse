@@ -105,7 +105,6 @@ export function calcFuncionarioMetrics(registros: RegistroDiario[]): Funcionario
       pct_meta,
       eficiencia_tempo,
       saldo_horas,
-      score,
       dias_trabalhados: total_dias,
       dias_falta_justificada,
       dias_falta_injustificada,
