@@ -74,19 +74,23 @@ export function calcFuncionarioMetrics(registros: RegistroDiario[]): Funcionario
   return Array.from(grouped.entries()).map(([funcionario_id, regs]) => {
     const nome = regs[0].nome;
     const setor = regs[0].setor;
-    const meta_mensal = Math.max(...regs.map((r) => Number(r.meta_mensal) || 0));
+
+    const meta_mensal = regs.reduce((a, r) => a + (Number(r.meta_diaria) || 0), 0);
     const producao_total = regs.reduce((a, r) => a + (Number(r.producao_dia) || 0), 0);
     const horas_trabalhadas = regs.reduce((a, r) => a + (Number(r.horas_trabalhadas) || 0), 0);
-    const carga_horaria_mensal = CARGA_HORARIA_MENSAL;
+    const carga_horaria_mensal = regs.length * 8;
 
-    const dias_falta_justificada = regs.filter(r => r.status_presenca?.toLowerCase() === 'falta justificada').length;
-    const dias_falta_injustificada = regs.filter(r => r.status_presenca?.toLowerCase() === 'falta injustificada').length;
-    const dias_atraso = regs.filter(r => r.status_presenca?.toLowerCase() === 'atraso').length;
+    const dias_falta_justificada = regs.filter((r) => r.status_presenca?.toLowerCase() === "falta justificada").length;
+    const dias_falta_injustificada = regs.filter(
+      (r) => r.status_presenca?.toLowerCase() === "falta injustificada",
+    ).length;
+    const dias_atraso = regs.filter((r) => r.status_presenca?.toLowerCase() === "atraso").length;
     const total_dias = regs.length;
-    const taxa_absenteismo = total_dias > 0 ? ((dias_falta_justificada + dias_falta_injustificada) / total_dias) * 100 : 0;
+    const taxa_absenteismo =
+      total_dias > 0 ? ((dias_falta_justificada + dias_falta_injustificada) / total_dias) * 100 : 0;
 
     const pct_meta = meta_mensal > 0 ? (producao_total / meta_mensal) * 100 : 0;
-    const eficiencia_tempo = (horas_trabalhadas / carga_horaria_mensal) * 100;
+    const eficiencia_tempo = carga_horaria_mensal > 0 ? (horas_trabalhadas / carga_horaria_mensal) * 100 : 0;
     const saldo_horas = horas_trabalhadas - carga_horaria_mensal;
     const score = pct_meta * 0.7 + eficiencia_tempo * 0.3;
 
@@ -95,11 +99,23 @@ export function calcFuncionarioMetrics(registros: RegistroDiario[]): Funcionario
     else if (pct_meta < 90) status = "amarelo";
 
     return {
-      funcionario_id, nome, setor, producao_total, meta_mensal,
-      horas_trabalhadas, carga_horaria_mensal, pct_meta, eficiencia_tempo,
-      saldo_horas, score, dias_trabalhados: total_dias,
-      dias_falta_justificada, dias_falta_injustificada, dias_atraso,
-      taxa_absenteismo, status,
+      funcionario_id,
+      nome,
+      setor,
+      producao_total,
+      meta_mensal,
+      horas_trabalhadas,
+      carga_horaria_mensal,
+      pct_meta,
+      eficiencia_tempo,
+      saldo_horas,
+      score,
+      dias_trabalhados: total_dias,
+      dias_falta_justificada,
+      dias_falta_injustificada,
+      dias_atraso,
+      taxa_absenteismo,
+      status,
     };
   });
 }
@@ -124,7 +140,7 @@ export function calcSetorMetrics(funcMetrics: FuncionarioMetrics[]): SetorMetric
 
 export function calcDependenciaColetiva(registros: RegistroDiario[]): DependenciaColetiva[] {
   const setores = new Map<string, RegistroDiario[]>();
-  registros.forEach(r => {
+  registros.forEach((r) => {
     if (!setores.has(r.setor)) setores.set(r.setor, []);
     setores.get(r.setor)!.push(r);
   });
@@ -133,34 +149,41 @@ export function calcDependenciaColetiva(registros: RegistroDiario[]): Dependenci
 
   setores.forEach((regsSetor, setor) => {
     const funcionarios = new Map<string, RegistroDiario[]>();
-    regsSetor.forEach(r => {
+    regsSetor.forEach((r) => {
       if (!funcionarios.has(r.funcionario_id)) funcionarios.set(r.funcionario_id, []);
       funcionarios.get(r.funcionario_id)!.push(r);
     });
 
     const prodPorDia = new Map<string, number>();
-    regsSetor.forEach(r => {
+    regsSetor.forEach((r) => {
       prodPorDia.set(r.data, (prodPorDia.get(r.data) || 0) + (Number(r.producao_dia) || 0));
     });
 
     const totalDias = prodPorDia.size;
-    const prodMediaDiaria = totalDias > 0
-      ? Array.from(prodPorDia.values()).reduce((a, b) => a + b, 0) / totalDias
-      : 0;
+    const prodMediaDiaria = totalDias > 0 ? Array.from(prodPorDia.values()).reduce((a, b) => a + b, 0) / totalDias : 0;
 
     funcionarios.forEach((regsFunc, funcId) => {
-      const diasPresente = new Set(regsFunc.filter(r =>
-        !r.status_presenca || r.status_presenca.toLowerCase() === 'presente' || r.status_presenca.toLowerCase() === 'atraso'
-      ).map(r => r.data));
+      const diasPresente = new Set(
+        regsFunc
+          .filter(
+            (r) =>
+              !r.status_presenca ||
+              r.status_presenca.toLowerCase() === "presente" ||
+              r.status_presenca.toLowerCase() === "atraso",
+          )
+          .map((r) => r.data),
+      );
 
-      const diasAusente = new Set(regsFunc.filter(r =>
-        r.status_presenca?.toLowerCase().includes('falta')
-      ).map(r => r.data));
+      const diasAusente = new Set(
+        regsFunc.filter((r) => r.status_presenca?.toLowerCase().includes("falta")).map((r) => r.data),
+      );
 
       if (diasAusente.size === 0) return;
 
-      let prodComFunc = 0, diasCom = 0;
-      let prodSemFunc = 0, diasSem = 0;
+      let prodComFunc = 0,
+        diasCom = 0;
+      let prodSemFunc = 0,
+        diasSem = 0;
 
       prodPorDia.forEach((prod, dia) => {
         if (diasPresente.has(dia)) {
@@ -193,10 +216,10 @@ export function calcDependenciaColetiva(registros: RegistroDiario[]): Dependenci
 
 export function simulateWhatIf(
   registros: RegistroDiario[],
-  funcionariosAusentes: string[]
+  funcionariosAusentes: string[],
 ): { setor: string; producao_original: number; producao_estimada: number; queda_pct: number }[] {
   const setores = new Map<string, RegistroDiario[]>();
-  registros.forEach(r => {
+  registros.forEach((r) => {
     if (!setores.has(r.setor)) setores.set(r.setor, []);
     setores.get(r.setor)!.push(r);
   });
@@ -206,7 +229,7 @@ export function simulateWhatIf(
   setores.forEach((regsSetor, setor) => {
     const prodTotal = regsSetor.reduce((a, r) => a + (Number(r.producao_dia) || 0), 0);
     const prodAusentes = regsSetor
-      .filter(r => funcionariosAusentes.includes(r.funcionario_id))
+      .filter((r) => funcionariosAusentes.includes(r.funcionario_id))
       .reduce((a, r) => a + (Number(r.producao_dia) || 0), 0);
 
     const prodEstimada = prodTotal - prodAusentes;
@@ -226,65 +249,65 @@ export function simulateWhatIf(
 export function generateInsights(funcMetrics: FuncionarioMetrics[], setorMetrics: SetorMetrics[]): Insight[] {
   const insights: Insight[] = [];
 
-  const muitasHorasBaixaProd = funcMetrics.filter(f => f.eficiencia_tempo > 90 && f.pct_meta < 70);
+  const muitasHorasBaixaProd = funcMetrics.filter((f) => f.eficiencia_tempo > 90 && f.pct_meta < 70);
   if (muitasHorasBaixaProd.length > 0) {
     insights.push({
       tipo: "danger",
       titulo: "⚠️ Muitas horas, baixa produção",
-      descricao: `${muitasHorasBaixaProd.map(f => f.nome).join(", ")} trabalham muitas horas mas têm produtividade abaixo de 70%. Pode indicar ineficiência operacional.`,
+      descricao: `${muitasHorasBaixaProd.map((f) => f.nome).join(", ")} trabalham muitas horas mas têm produtividade abaixo de 70%. Pode indicar ineficiência operacional.`,
     });
   }
 
-  const altaProdMenosHoras = funcMetrics.filter(f => f.pct_meta >= 90 && f.eficiencia_tempo < 80);
+  const altaProdMenosHoras = funcMetrics.filter((f) => f.pct_meta >= 90 && f.eficiencia_tempo < 80);
   if (altaProdMenosHoras.length > 0) {
     insights.push({
       tipo: "success",
       titulo: "🌟 Alta produtividade com menos horas",
-      descricao: `${altaProdMenosHoras.map(f => f.nome).join(", ")} atingem metas acima de 90% com menos horas que o esperado.`,
+      descricao: `${altaProdMenosHoras.map((f) => f.nome).join(", ")} atingem metas acima de 90% com menos horas que o esperado.`,
     });
   }
 
-  const setoresBaixos = setorMetrics.filter(s => s.media_score < 60);
+  const setoresBaixos = setorMetrics.filter((s) => s.media_score < 60);
   if (setoresBaixos.length > 0) {
     insights.push({
       tipo: "warning",
       titulo: "📉 Setores com baixa eficiência",
-      descricao: `${setoresBaixos.map(s => s.setor).join(", ")} apresentam score médio abaixo de 60%.`,
+      descricao: `${setoresBaixos.map((s) => s.setor).join(", ")} apresentam score médio abaixo de 60%.`,
     });
   }
 
-  const setoresAltos = setorMetrics.filter(s => s.media_score >= 85);
+  const setoresAltos = setorMetrics.filter((s) => s.media_score >= 85);
   if (setoresAltos.length > 0) {
     insights.push({
       tipo: "success",
       titulo: "🏆 Setores com alta performance",
-      descricao: `${setoresAltos.map(s => s.setor).join(", ")} mantêm score médio acima de 85%.`,
+      descricao: `${setoresAltos.map((s) => s.setor).join(", ")} mantêm score médio acima de 85%.`,
     });
   }
 
-  const criticos = funcMetrics.filter(f => f.status === "vermelho");
+  const criticos = funcMetrics.filter((f) => f.status === "vermelho");
   if (criticos.length > 0) {
     insights.push({
       tipo: "danger",
       titulo: `🔴 ${criticos.length} funcionário(s) abaixo de 70% da meta`,
-      descricao: `${criticos.map(f => `${f.nome} (${f.pct_meta.toFixed(0)}%)`).join(", ")}`,
+      descricao: `${criticos.map((f) => `${f.nome} (${f.pct_meta.toFixed(0)}%)`).join(", ")}`,
     });
   }
 
-  const altoAbsenteismo = funcMetrics.filter(f => f.taxa_absenteismo > 15);
+  const altoAbsenteismo = funcMetrics.filter((f) => f.taxa_absenteismo > 15);
   if (altoAbsenteismo.length > 0) {
     insights.push({
       tipo: "warning",
       titulo: "📋 Alto absenteísmo detectado",
-      descricao: `${altoAbsenteismo.map(f => `${f.nome} (${f.taxa_absenteismo.toFixed(0)}%)`).join(", ")} apresentam taxa de absenteísmo acima de 15%.`,
+      descricao: `${altoAbsenteismo.map((f) => `${f.nome} (${f.taxa_absenteismo.toFixed(0)}%)`).join(", ")} apresentam taxa de absenteísmo acima de 15%.`,
     });
   }
 
   // Sugestão de realocação
-  const funcionariosComImpacto = funcMetrics.filter(f => f.status === "vermelho" && f.taxa_absenteismo > 10);
+  const funcionariosComImpacto = funcMetrics.filter((f) => f.status === "vermelho" && f.taxa_absenteismo > 10);
   if (funcionariosComImpacto.length > 0) {
     const porSetor = new Map<string, string[]>();
-    funcionariosComImpacto.forEach(f => {
+    funcionariosComImpacto.forEach((f) => {
       if (!porSetor.has(f.setor)) porSetor.set(f.setor, []);
       porSetor.get(f.setor)!.push(f.nome);
     });
@@ -302,18 +325,20 @@ export function generateInsights(funcMetrics: FuncionarioMetrics[], setorMetrics
 
 export function getMonthOptions(registros: RegistroDiario[]): string[] {
   const months = new Set<string>();
-  registros.forEach(r => months.add(r.data.substring(0, 7)));
+  registros.forEach((r) => months.add(r.data.substring(0, 7)));
   return Array.from(months).sort().reverse();
 }
 
 export function getSetorOptions(registros: RegistroDiario[]): string[] {
   const setores = new Set<string>();
-  registros.forEach(r => setores.add(r.setor));
+  registros.forEach((r) => setores.add(r.setor));
   return Array.from(setores).sort();
 }
 
 export function getFuncionarioOptions(registros: RegistroDiario[]): { id: string; nome: string }[] {
   const map = new Map<string, string>();
-  registros.forEach(r => map.set(r.funcionario_id, r.nome));
-  return Array.from(map.entries()).map(([id, nome]) => ({ id, nome })).sort((a, b) => a.nome.localeCompare(b.nome));
+  registros.forEach((r) => map.set(r.funcionario_id, r.nome));
+  return Array.from(map.entries())
+    .map(([id, nome]) => ({ id, nome }))
+    .sort((a, b) => a.nome.localeCompare(b.nome));
 }
