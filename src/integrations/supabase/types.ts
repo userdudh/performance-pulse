@@ -14,7 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      registros_diarios: {
+        Row: {
+          created_at: string
+          data: string
+          funcionario_id: string
+          hora_entrada: string | null
+          hora_saida: string | null
+          horas_trabalhadas: number
+          id: string
+          meta_diaria: number
+          meta_mensal: number
+          nome: string
+          producao_dia: number
+          setor: string
+          status_presenca: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data: string
+          funcionario_id: string
+          hora_entrada?: string | null
+          hora_saida?: string | null
+          horas_trabalhadas?: number
+          id?: string
+          meta_diaria?: number
+          meta_mensal?: number
+          nome: string
+          producao_dia?: number
+          setor: string
+          status_presenca?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          funcionario_id?: string
+          hora_entrada?: string | null
+          hora_saida?: string | null
+          horas_trabalhadas?: number
+          id?: string
+          meta_diaria?: number
+          meta_mensal?: number
+          nome?: string
+          producao_dia?: number
+          setor?: string
+          status_presenca?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
